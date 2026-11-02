@@ -13,15 +13,17 @@ composer require kopexa/mautic-postal-bundle
 php bin/console mautic:plugins:reload
 ```
 
+Until the package is on Packagist, add the repository first:
+
+```bash
+composer config repositories.mautic-postal-bundle vcs https://github.com/kopexa-grc/mautic-postal-bundle
+```
+
 Configure the Postal key (`postal_jwks_url` or `postal_webhook_public_key`) and add a webhook to `https://<mautic>/mailer/callback` in Postal.
 
 Already included in the hardened Mautic image
 [`ghcr.io/kopexa-grc/mautic`](https://github.com/kopexa-grc/mautic-stack).
 
-> Development happens in
-> [kopexa-grc/mautic-stack](https://github.com/kopexa-grc/mautic-stack/tree/main/image/extensions/mautic-postal-bundle);
-> the package repository is a read-only mirror. Issues and pull requests
-> go to mautic-stack.
 
 ## How it works
 
@@ -52,4 +54,19 @@ In Postal: *Server → Webhooks → Add webhook*, URL
 If egress is restricted (`networkPolicy.egress`), allow Mautic to reach the
 Postal host on 443 for the JWKS, or configure the PEM instead.
 
-Full setup, endpoint behaviour and troubleshooting: [docs/postal.md](../../../docs/postal.md).
+Full setup, endpoint behaviour and troubleshooting: [docs/postal.md](https://github.com/kopexa-grc/mautic-stack/blob/main/docs/postal.md).
+
+## Development
+
+- `bin/check.sh` checks the package (PHP lint, `composer validate`, version
+  consistency, self-test). CI runs it on every push and pull request.
+- Integration tests run in
+  [kopexa-grc/mautic-stack](https://github.com/kopexa-grc/mautic-stack): its
+  smoke test installs this package into the Mautic image and exercises it
+  end to end.
+- **Release:** bump `VERSION`, add a `CHANGELOG.md` entry, update the plugin
+  version in `Config/config.php`. On
+  merge to `main`, the release workflow tags `v<VERSION>` and creates the
+  GitHub release; Packagist and mautic-stack's Renovate pick it up.
+
+
