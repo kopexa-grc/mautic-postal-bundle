@@ -1,5 +1,7 @@
 # kopexa/mautic-postal-bundle
 
+[![Packagist](https://img.shields.io/packagist/v/kopexa/mautic-postal-bundle)](https://packagist.org/packages/kopexa/mautic-postal-bundle) [![ci](https://github.com/kopexa-grc/mautic-postal-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/kopexa-grc/mautic-postal-bundle/actions/workflows/ci.yml)
+
 [Postal](https://docs.postalserver.io) integration for Mautic 7: bounces and
 hard delivery failures reported by Postal mark the contact as
 *Do Not Contact – bounced*, so Mautic stops mailing dead addresses.
@@ -11,12 +13,6 @@ Mautic 7 (Composer-based installation):
 ```bash
 composer require kopexa/mautic-postal-bundle
 php bin/console mautic:plugins:reload
-```
-
-Until the package is on Packagist, add the repository first:
-
-```bash
-composer config repositories.mautic-postal-bundle vcs https://github.com/kopexa-grc/mautic-postal-bundle
 ```
 
 Configure the Postal key (`postal_jwks_url` or `postal_webhook_public_key`) and add a webhook to `https://<mautic>/mailer/callback` in Postal.
