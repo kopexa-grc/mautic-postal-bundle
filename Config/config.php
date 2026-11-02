@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'name'        => 'Postal',
     'description' => 'Processes Postal bounce and delivery-failure webhooks (POST /mailer/callback) and marks contacts as bounced.',
-    'version'     => '0.1.0', // x-release-please-version
+    'version'     => '0.1.1', // x-release-please-version
     'author'      => 'Kopexa',
     'parameters'  => [
         // Public key Postal signs webhooks with: either a PEM, or the JWKS URL of
