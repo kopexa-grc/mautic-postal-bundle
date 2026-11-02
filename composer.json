@@ -29,7 +29,7 @@
         "php": "^8.2",
         "ext-json": "*",
         "ext-openssl": "*",
-        "mautic/core-lib": "^7.0"
+        "mautic/core-lib": "^7.2"
     },
     "minimum-stability": "stable"
 }
