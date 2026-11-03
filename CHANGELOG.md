@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/kopexa-grc/mautic-postal-bundle/compare/v0.1.1...v0.2.0) (2026-11-03)
+
+
+### Features
+
+* plugin dialog with setup steps and live status ([ebaa1a3](https://github.com/kopexa-grc/mautic-postal-bundle/commit/ebaa1a3fd8d7ae523d6a0f03c99a7ae5c143f951))
+* send through Postal's HTTP API (postal+api://); Postal logo in the plugin list ([6f0bfb1](https://github.com/kopexa-grc/mautic-postal-bundle/commit/6f0bfb11f55b42f0f739d5ff2a45b6aaef0cf42b))
+
 ## [0.1.1](https://github.com/kopexa-grc/mautic-postal-bundle/compare/v0.1.0...v0.1.1) (2026-11-02)
 
 
