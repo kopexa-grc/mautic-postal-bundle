@@ -59,7 +59,7 @@ $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/docroot/index.php';
 chdir(__DIR__.'/docroot');
 require __DIR__.'/docroot/index.php';
 PHP
-  (cd "$MAUTIC_DIR/docroot" && PHP_CLI_SERVER_WORKERS=4 php -d memory_limit=512M -S "127.0.0.1:$PORT" ../kopexa-router.php >"$WORK/server.log" 2>&1 &)
+  (cd "$MAUTIC_DIR/docroot" && PHP_CLI_SERVER_WORKERS=4 php -d memory_limit=512M -d opcache.revalidate_freq=0 -S "127.0.0.1:$PORT" ../kopexa-router.php >"$WORK/server.log" 2>&1 &)
   for _ in $(seq 1 60); do
     [[ "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/s/login")" == 200 ]] && { pass "web server up"; return; }
     sleep 1
