@@ -10,7 +10,9 @@
   the contact as *Do Not Contact – bounced*, so Mautic stops mailing dead
   addresses.
 
-Appears under *Settings → Plugins* with the Postal logo.
+Appears under *Settings → Plugins* with the Postal logo; its dialog shows the
+setup steps and the live status of the instance (webhook URL, webhook key,
+active mail transport).
 
 ## Installation
 
