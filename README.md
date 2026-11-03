@@ -2,9 +2,15 @@
 
 [![Packagist](https://img.shields.io/packagist/v/kopexa/mautic-postal-bundle)](https://packagist.org/packages/kopexa/mautic-postal-bundle) [![ci](https://github.com/kopexa-grc/mautic-postal-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/kopexa-grc/mautic-postal-bundle/actions/workflows/ci.yml)
 
-[Postal](https://docs.postalserver.io) integration for Mautic 7: bounces and
-hard delivery failures reported by Postal mark the contact as
-*Do Not Contact – bounced*, so Mautic stops mailing dead addresses.
+[Postal](https://docs.postalserver.io) integration for Mautic 7:
+
+- **Sending through Postal's HTTP API** instead of SMTP: mailer DSN
+  `postal+api://API_KEY@postal.example.com`.
+- **Bounces:** bounces and hard delivery failures reported by Postal mark
+  the contact as *Do Not Contact – bounced*, so Mautic stops mailing dead
+  addresses.
+
+Appears under *Settings → Plugins* with the Postal logo.
 
 ## Installation
 
@@ -35,6 +41,25 @@ Postal sends webhooks to Mautic's transport callback endpoint
 
 Unsigned or wrongly signed requests are rejected (403). Requests without a
 Postal signature header are left to other transports.
+
+## Sending through the API
+
+```
+MAUTIC_MAILER_DSN=postal+api://API_KEY@postal.example.com
+```
+
+`API_KEY` is an API credential of the Postal server (*Server → Credentials
+→ API*). The transport posts the message Mautic built to
+`/api/v1/send/raw` (base64, envelope sender and recipients), so all headers
+arrive unchanged. Postal's error codes become mailer errors
+(`Postal rejected the message: InvalidServerAPIKey`), Postal's message ID
+is set on the sent message.
+
+| DSN | |
+|---|---|
+| `postal+api://KEY@postal.example.com` | HTTPS on 443 |
+| `postal+api://KEY@postal.example.com:8443` | another port |
+| `postal+api://KEY@postal-web:5000?tls=false` | plain HTTP (internal network) |
 
 ## Configuration
 
@@ -75,3 +100,8 @@ Full setup, endpoint behaviour and troubleshooting: [docs/postal.md](https://git
   updates (`ci:`) do not.
 
 
+
+The Postal logo (`Assets/img/icon.png`) comes from
+[postalserver/postal](https://github.com/postalserver/postal) under the MIT
+licence (see `Assets/img/NOTICE`). This plugin is not affiliated with the
+Postal project.

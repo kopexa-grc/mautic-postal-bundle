@@ -1,6 +1,6 @@
 {
     "name": "kopexa/mautic-postal-bundle",
-    "description": "Postal mail server integration for Mautic: bounce and delivery-failure webhooks with signature verification.",
+    "description": "Postal mail server integration for Mautic: sending through the Postal HTTP API, bounce and delivery-failure webhooks with signature verification.",
     "type": "mautic-plugin",
     "license": "Apache-2.0",
     "keywords": [
@@ -8,6 +8,7 @@
         "plugin",
         "postal",
         "bounce",
+        "mailer",
         "webhook"
     ],
     "homepage": "https://github.com/kopexa-grc/mautic-postal-bundle",

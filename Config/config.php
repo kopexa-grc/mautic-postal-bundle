@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'name'        => 'Postal',
-    'description' => 'Processes Postal bounce and delivery-failure webhooks (POST /mailer/callback) and marks contacts as bounced.',
+    'description' => 'Sends through the Postal HTTP API (mailer DSN postal+api://KEY@host) and processes Postal bounce and delivery-failure webhooks (POST /mailer/callback).',
     'version'     => '0.1.1', // x-release-please-version
     'author'      => 'Kopexa',
     'parameters'  => [
