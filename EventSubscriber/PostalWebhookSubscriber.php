@@ -38,7 +38,7 @@ final class PostalWebhookSubscriber implements EventSubscriberInterface
         }
 
         if (!$this->verifier->isConfigured()) {
-            $event->setResponse(new JsonResponse(['error' => 'Postal webhook verification is not configured'], 503));
+            $event->setResponse(new JsonResponse(['error' => 'Postal plugin not set up: switch it on and enter the Postal key under Settings → Plugins → Postal'], 503));
 
             return;
         }

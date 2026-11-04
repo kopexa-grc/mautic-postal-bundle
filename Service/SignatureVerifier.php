@@ -9,20 +9,21 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Verifies the X-Postal-Signature-256 header (base64 RSA-SHA256 over the raw
- * request body) against a configured PEM or the Postal server's JWKS.
+ * request body) against a configured PEM or the Postal server's JWKS
+ * (see PostalSettings for where they come from).
  */
 class SignatureVerifier
 {
     public function __construct(
         private readonly CoreParametersHelper $parameters,
+        private readonly PostalSettings $settings,
         private readonly LoggerInterface $logger,
     ) {
     }
 
     public function isConfigured(): bool
     {
-        return '' !== trim((string) $this->parameters->get('postal_webhook_public_key'))
-            || '' !== trim((string) $this->parameters->get('postal_jwks_url'));
+        return $this->settings->isConfigured();
     }
 
     public function verify(string $body, string $signature, ?string $keyId = null): bool
@@ -51,7 +52,7 @@ class SignatureVerifier
      */
     private function publicKeys(?string $keyId): array
     {
-        $pem = trim((string) $this->parameters->get('postal_webhook_public_key'));
+        $pem = $this->settings->publicKey();
         if ('' !== $pem) {
             return [$pem];
         }
@@ -69,7 +70,7 @@ class SignatureVerifier
      */
     private function jwks(): array
     {
-        $url = trim((string) $this->parameters->get('postal_jwks_url'));
+        $url = $this->settings->jwksUrl();
         if ('' === $url) {
             return [];
         }

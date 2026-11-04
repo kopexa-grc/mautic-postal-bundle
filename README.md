@@ -4,15 +4,10 @@
 
 [Postal](https://docs.postalserver.io) integration for Mautic 7:
 
-- **Sending through Postal's HTTP API** instead of SMTP: mailer DSN
-  `postal+api://API_KEY@postal.example.com`.
 - **Bounces:** bounces and hard delivery failures reported by Postal mark
   the contact as *Do Not Contact – bounced*, so Mautic stops mailing dead
   addresses.
-
-Appears under *Settings → Plugins* with the Postal logo; its dialog shows the
-setup steps and the live status of the instance (webhook URL, webhook key,
-active mail transport).
+- **Sending through Postal's HTTP API** instead of SMTP (optional).
 
 ## Installation
 
@@ -23,61 +18,72 @@ composer require kopexa/mautic-postal-bundle
 php bin/console mautic:plugins:reload
 ```
 
-Configure the Postal key (`postal_jwks_url` or `postal_webhook_public_key`) and add a webhook to `https://<mautic>/mailer/callback` in Postal.
+## Setup
 
-Already included in the hardened Mautic image
-[`ghcr.io/kopexa-grc/mautic`](https://github.com/kopexa-grc/mautic-stack).
+Everything happens in Mautic and Postal; the dialog under
+*Settings → Plugins → Postal* shows each step with the values of your
+instance and whether it is working.
 
+### 1. Bounces
+
+1. In Postal, open your mail server → *Webhooks* → *Add webhook*:
+   - URL: `https://<your-mautic>/mailer/callback`
+   - Events: **MessageBounced** and **MessageDeliveryFailed**
+2. In Mautic, *Settings → Plugins → Postal*: enter the key URL of your
+   Postal server, `https://<your-postal>/.well-known/jwks.json`, switch the
+   plugin on and save.
+
+Postal signs every webhook; Mautic checks the signature with that key and
+refuses webhooks while the plugin is switched off or has no key. If Mautic
+cannot reach your Postal server, paste its public key (PEM) instead of the
+URL.
+
+### 2. Sending through Postal (optional)
+
+In Postal, create an API key: mail server → *Credentials* → *Add
+credential*, type *API*. In Mautic, *Configuration → Email Settings*, set
+the mail transport (DSN):
+
+| Field | Value |
+|---|---|
+| Scheme | `postal+api` |
+| Host | your Postal server, e.g. `postal.example.com` |
+| User | the API key |
+| Port | only if not 443 |
+| Options | `tls=false` only for plain HTTP inside your own network |
+
+As one string: `postal+api://API_KEY@postal.example.com`. The sender
+address must belong to a domain verified in Postal. Mautic's message is
+posted unchanged to Postal's `/api/v1/send/raw`; Postal's errors show up as
+mail errors (e.g. `Postal rejected the message: InvalidServerAPIKey`).
 
 ## How it works
 
 Postal sends webhooks to Mautic's transport callback endpoint
-`POST https://<mautic>/mailer/callback`. The plugin:
+`POST /mailer/callback`. The plugin
 
-1. verifies `X-Postal-Signature-256` (RSA-SHA256 over the body) against the
-   Postal server's public key — from its JWKS
-   (`https://<postal>/.well-known/jwks.json`) or a configured PEM;
+1. verifies `X-Postal-Signature-256` (RSA-SHA256 over the body) with the
+   Postal server's key (JWKS, cached for an hour, or a PEM);
 2. handles `MessageBounced` and `MessageDeliveryFailed` (status `HardFail`)
-   through Mautic's `TransportCallback` API (DNC reason *bounced*);
+   through Mautic's transport callback (DNC reason *bounced*);
 3. ignores all other events (sent, delayed, held, opens, clicks).
 
-Unsigned or wrongly signed requests are rejected (403). Requests without a
-Postal signature header are left to other transports.
+Wrongly signed requests are rejected (403); requests without a Postal
+signature are left to other mail transports.
 
-## Sending through the API
+## Configuration as code
 
-```
-MAUTIC_MAILER_DSN=postal+api://API_KEY@postal.example.com
-```
+For installations that keep their settings in files, the key can also be
+set as Mautic parameters, e.g. in `config/local.php`:
 
-`API_KEY` is an API credential of the Postal server (*Server → Credentials
-→ API*). The transport posts the message Mautic built to
-`/api/v1/send/raw` (base64, envelope sender and recipients), so all headers
-arrive unchanged. Postal's error codes become mailer errors
-(`Postal rejected the message: InvalidServerAPIKey`), Postal's message ID
-is set on the sent message.
-
-| DSN | |
+| Parameter | |
 |---|---|
-| `postal+api://KEY@postal.example.com` | HTTPS on 443 |
-| `postal+api://KEY@postal.example.com:8443` | another port |
-| `postal+api://KEY@postal-web:5000?tls=false` | plain HTTP (internal network) |
+| `postal_jwks_url` | key URL of the Postal server |
+| `postal_webhook_public_key` | public key (PEM), takes precedence over the URL |
+| `postal_jwks_cache_ttl` | seconds to cache the JWKS (default 3600) |
 
-## Configuration
-
-| Parameter | Env (kopexa image) | |
-|---|---|---|
-| `postal_jwks_url` | `MAUTIC_POSTAL_JWKS_URL` | e.g. `https://postal.example.com/.well-known/jwks.json` (cached, default 1 h) |
-| `postal_webhook_public_key` | `MAUTIC_POSTAL_WEBHOOK_PUBLIC_KEY` | PEM, takes precedence over the JWKS URL |
-
-In Postal: *Server → Webhooks → Add webhook*, URL
-`https://<mautic>/mailer/callback`, events **MessageBounced** and
-**MessageDeliveryFailed**.
-
-If egress is restricted (`networkPolicy.egress`), allow Mautic to reach the
-Postal host on 443 for the JWKS, or configure the PEM instead.
-
-Full setup, endpoint behaviour and troubleshooting: [docs/postal.md](https://github.com/kopexa-grc/mautic-stack/blob/main/docs/postal.md).
+A key set this way takes precedence over the dialog and applies whether
+the plugin is switched on or not; the dialog says so.
 
 ## Development
 
@@ -85,10 +91,6 @@ Full setup, endpoint behaviour and troubleshooting: [docs/postal.md](https://git
   consistency, self-test). CI runs it on every push and pull request.
 - `tests/functional/run.sh` installs the plugin into a real Mautic 7 and
   tests it over HTTP; CI runs it on PHP 8.4 and 8.5.
-- End-to-end tests also run in
-  [kopexa-grc/mautic-stack](https://github.com/kopexa-grc/mautic-stack): its
-  smoke test installs this package into the Mautic image and exercises it
-  end to end.
 - **Commits** follow [Conventional Commits](https://www.conventionalcommits.org)
   (`feat:`, `fix:`, `docs:`, `chore:` …); they drive versions and the changelog.
 - **Releases** are automated with

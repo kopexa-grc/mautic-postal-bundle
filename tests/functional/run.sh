@@ -65,4 +65,38 @@ php -r '
   catch (Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) { echo $e->getMessage(); }
 ' "$MAUTIC_DIR" "$MOCK_PORT" >"$WORK/bad.txt" 2>&1 || true
 grep -q 'Postal rejected the message: InvalidServerAPIKey' "$WORK/bad.txt" && pass "Postal errors become transport errors (InvalidServerAPIKey)" || { cat "$WORK/bad.txt"; fail "error handling"; }
+
+echo "Setup in the plugin dialog (no key in Mautic's configuration)"
+set_params '{"postal_webhook_public_key": "", "postal_jwks_url": ""}'
+login >/dev/null
+ajax_csrf="$(curl -s -b "$JAR" -c "$JAR" "$BASE/s/plugins" | sed -nE "s/.*mauticAjaxCsrf *= *'([^']+)'.*/\1/p" | head -1)"
+dialog() { # prints the dialog HTML; the form token to $WORK/dialog-token
+  curl -s -b "$JAR" -c "$JAR" -H 'X-Requested-With: XMLHttpRequest' "$BASE/s/integration/Postal/config" \
+    | php -r '$d = json_decode(stream_get_contents(STDIN), true); $h = (string) ($d["newContent"] ?? "");
+        preg_match("/<input[^>]*name=\"integration_config\[_token\]\"[^>]*>/", $h, $m); preg_match("/value=\"([^\"]*)\"/", $m[0] ?? "", $v);
+        file_put_contents($argv[1], $v[1] ?? ""); echo $h;' "$WORK/dialog-token"
+}
+save() { # <published 1|0> <jwks url> <pem file>: prints the response JSON
+  dialog >/dev/null
+  curl -s -b "$JAR" -c "$JAR" -H 'X-Requested-With: XMLHttpRequest' -H "X-CSRF-Token: $ajax_csrf" -X POST "$BASE/s/integration/Postal/config" \
+    --data-urlencode "integration_config[_token]=$(cat "$WORK/dialog-token")" --data-urlencode "integration_config[isPublished]=$1" \
+    --data-urlencode "integration_config[apiKeys][jwks_url]=$2" --data-urlencode "integration_config[apiKeys][public_key]@$3" \
+    --data-urlencode "integration_config[buttons][save]="
+}
+pub="$WORK/postal.pub"; openssl rsa -in "$key" -pubout -out "$pub" 2>/dev/null
+[[ "$(post "$bounce" "$key")" == 503 ]] && grep -q 'Not set up yet' <<<"$(dialog)" && ! grep -qi 'helm' <<<"$(dialog)" \
+  && pass "without a key: webhooks refused (503), the dialog says what to do (no deployment-specific wording)" || { cat "$WORK/resp"; fail "unconfigured state"; }
+grep -q 'Use an https:// address' <<<"$(save 1 'http://postal.example.com/.well-known/jwks.json' /dev/null)" \
+  && pass "dialog: the key URL must be https" || fail "http key URL accepted"
+api -X POST "$BASE/api/contacts/$cid/dnc/email/remove" >/dev/null
+save 1 '' "$pub" | grep -q closeModal || fail "saving the dialog"
+[[ "$(post "$bounce" "$key")" == 200 ]] && jq -e '.handled == true' "$WORK/resp" >/dev/null \
+  && [[ "$(api "$BASE/api/contacts/$cid" | jq -r '.contact.doNotContact[0].reason')" == 2 ]] && grep -q 'Bounces are processed with the key below' <<<"$(dialog)" \
+  && pass "key entered and switched on in the dialog: bounces processed" || { cat "$WORK/resp"; fail "dialog setup"; }
+save 0 '' "$pub" | grep -q closeModal || fail "switching off"
+[[ "$(post "$bounce" "$key")" == 503 ]] && grep -q 'Switched off' <<<"$(dialog)" \
+  && pass "switched off: webhooks refused, the dialog says so" || { cat "$WORK/resp"; fail "switch off"; }
+set_params "$(jq -n --arg k "$(cat "$pub")" '{postal_webhook_public_key: $k}')"
+[[ "$(post "$bounce" "$key")" == 200 ]] && grep -q "configuration file" <<<"$(dialog)" \
+  && pass "a key in Mautic's configuration takes precedence (switch not needed)" || { cat "$WORK/resp"; fail "configuration precedence"; }
 echo "all Postal checks passed"
