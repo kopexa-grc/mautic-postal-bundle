@@ -86,8 +86,10 @@ save() { # <published 1|0> <jwks url> <pem file>: prints the response JSON
 pub="$WORK/postal.pub"; openssl rsa -in "$key" -pubout -out "$pub" 2>/dev/null
 [[ "$(post "$bounce" "$key")" == 503 ]] && grep -q 'Not set up yet' <<<"$(dialog)" && ! grep -qi 'helm' <<<"$(dialog)" \
   && pass "without a key: webhooks refused (503), the dialog says what to do (no deployment-specific wording)" || { cat "$WORK/resp"; fail "unconfigured state"; }
-grep -q 'Use an https:// address' <<<"$(save 1 'http://postal.example.com/.well-known/jwks.json' /dev/null)" \
-  && pass "dialog: the key URL must be https" || fail "http key URL accepted"
+[[ -n "$ajax_csrf" ]] || fail "no mauticAjaxCsrf on the plugins page"
+resp="$(save 1 'http://postal.example.com/.well-known/jwks.json' /dev/null)"
+grep -q 'Use an https:// address' <<<"$resp" \
+  && pass "dialog: the key URL must be https" || { echo "$resp" | php -r '$d = json_decode(stream_get_contents(STDIN), true); echo is_array($d) ? substr(strip_tags(json_encode(array_map(fn ($v) => is_string($v) ? substr($v, 0, 300) : $v, $d))), 0, 1500) : "not JSON";'; fail "http key URL accepted"; }
 api -X POST "$BASE/api/contacts/$cid/dnc/email/remove" >/dev/null
 save 1 '' "$pub" | grep -q closeModal || fail "saving the dialog"
 [[ "$(post "$bounce" "$key")" == 200 ]] && jq -e '.handled == true' "$WORK/resp" >/dev/null \
