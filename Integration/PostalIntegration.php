@@ -63,7 +63,7 @@ class PostalIntegration extends BasicIntegration implements BasicInterface, Conf
         $key    = PostalSettings::resolveFrom($this->parameters, (bool) $config?->getIsPublished(), (array) ($config?->getApiKeys() ?? []));
 
         $status = match ($key['source']) {
-            PostalSettings::SOURCE_CONFIGURATION => '✓ Bounces are processed. The key is set in Mautic\'s configuration file (<code>postal_jwks_url</code> / <code>postal_webhook_public_key</code>); it takes precedence over the fields below.',
+            PostalSettings::SOURCE_CONFIGURATION => '✓ Bounces are processed. The key is set in Mautic\'s configuration (parameters <code>postal_jwks_url</code> / <code>postal_webhook_public_key</code>); it takes precedence over the fields below.',
             PostalSettings::SOURCE_PLUGIN        => '✓ Bounces are processed with the key below ('.('' !== $key['pem'] ? 'public key' : $e($key['jwks'])).').',
             default                              => match (true) {
                 $key['enabled']  => '✗ No key yet: enter the Postal key URL below and save. Until then Mautic refuses Postal\'s webhooks.',

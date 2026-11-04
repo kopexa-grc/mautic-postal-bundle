@@ -99,6 +99,6 @@ save 0 '' "$pub" | grep -q closeModal || fail "switching off"
 [[ "$(post "$bounce" "$key")" == 503 ]] && grep -q 'Switched off' <<<"$(dialog)" \
   && pass "switched off: webhooks refused, the dialog says so" || { cat "$WORK/resp"; fail "switch off"; }
 set_params "$(jq -n --arg k "$(cat "$pub")" '{postal_webhook_public_key: $k}')"
-[[ "$(post "$bounce" "$key")" == 200 ]] && grep -q "configuration file" <<<"$(dialog)" \
+[[ "$(post "$bounce" "$key")" == 200 ]] && grep -q "configuration (parameters" <<<"$(dialog)" \
   && pass "a key in Mautic's configuration takes precedence (switch not needed)" || { cat "$WORK/resp"; fail "configuration precedence"; }
 echo "all Postal checks passed"
