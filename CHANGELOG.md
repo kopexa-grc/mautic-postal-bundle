@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/kopexa-grc/mautic-postal-bundle/compare/v0.2.0...v0.3.0) (2026-11-04)
+
+
+### Features
+
+* set up Postal in the plugin dialog ([3fa5ccf](https://github.com/kopexa-grc/mautic-postal-bundle/commit/3fa5ccfa3a8b048bd97af3fa8704ba8622e141f9))
+
+
+### Bug fixes
+
+* dialog names Mautic's configuration, not a file, as the source of a key set as code ([2670bfe](https://github.com/kopexa-grc/mautic-postal-bundle/commit/2670bfed55eea3e95f832935ce6fde3ff3d874aa))
+
 ## [0.2.0](https://github.com/kopexa-grc/mautic-postal-bundle/compare/v0.1.1...v0.2.0) (2026-11-03)
 
 
